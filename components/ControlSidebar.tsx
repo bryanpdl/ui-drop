@@ -1,9 +1,12 @@
 import { Vector3, Color, Euler, MathUtils } from 'three';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronUp, ChevronDown, Upload } from 'lucide-react';
+import Image from 'next/image';
+
+type EnvironmentPreset = "apartment" | "city" | "dawn" | "forest" | "lobby" | "night" | "park" | "studio" | "sunset" | "warehouse";
 
 interface ControlSidebarProps {
-  setEnvironmentPreset: (preset: string) => void;
+  setEnvironmentPreset: (preset: EnvironmentPreset) => void;
   setBackgroundColor: (color: string) => void;
   setCameraType: (type: 'perspective' | 'orthographic') => void;
   setEnvironmentIntensity: (intensity: number) => void;
@@ -48,11 +51,7 @@ export default function ControlSidebar({
     modelOrientation: false, // Changed from modelPosition and modelRotation
   });
 
-  useEffect(() => {
-    updateBackground();
-  }, [backgroundType, color1, color2, angle, backgroundImage]);
-
-  const updateBackground = () => {
+  const updateBackground = useCallback(() => {
     let backgroundValue: string;
     switch (backgroundType) {
       case 'solid':
@@ -69,7 +68,11 @@ export default function ControlSidebar({
         break;
     }
     setBackgroundColor(backgroundValue);
-  };
+  }, [backgroundType, color1, color2, angle, backgroundImage]);
+
+  useEffect(() => {
+    updateBackground();
+  }, [backgroundType, color1, color2, angle, backgroundImage, updateBackground]);
 
   const handleCameraTypeToggle = () => {
     setIsPerspective(!isPerspective);
@@ -119,6 +122,10 @@ export default function ControlSidebar({
   const handleBackgroundImageFitChange = (fit: 'fill' | 'fit') => {
     setLocalBackgroundImageFit(fit);
     setBackgroundImageFit(fit);
+  };
+
+  const handleEnvironmentPresetChange = (preset: EnvironmentPreset) => {
+    setEnvironmentPreset(preset);
   };
 
   return (
@@ -184,10 +191,12 @@ export default function ControlSidebar({
                         </div>
                       </div>
                       <div className="relative w-full h-20">
-                        <img
+                        <Image
                           src={backgroundImage}
                           alt="Background"
-                          className="w-full h-full object-cover rounded"
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded"
                         />
                       </div>
                     </div>
@@ -225,7 +234,7 @@ export default function ControlSidebar({
           {expandedCards.environment && (
             <div className="p-4">
               <select
-                onChange={(e) => setEnvironmentPreset(e.target.value)}
+                onChange={(e) => handleEnvironmentPresetChange(e.target.value as EnvironmentPreset)}
                 className="w-full bg-[#3A3A42] text-gray-100 rounded-full py-2 px-4 mb-2 appearance-none"
               >
                 <option value="sunset">Sunset</option>

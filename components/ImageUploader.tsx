@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function ImageUploader() {
-  const [image, setImage] = useState<File | null>(null);
+  const [, setImage] = useState<File | null>(null);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();

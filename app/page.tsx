@@ -1,29 +1,28 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useState, useCallback, useEffect } from "react";
+import { Suspense, useState, useCallback } from "react";
 import Scene from "@/components/Scene";
 import ControlSidebar from "@/components/ControlSidebar";
 import LeftSidebar from "@/components/LeftSidebar";
 import DockControls from "@/components/DockControls";
-import { Vector3, Color, Texture, Euler } from "three";
+import { Vector3, Texture, Euler } from "three";
+
+type EnvironmentPreset = "apartment" | "city" | "dawn" | "forest" | "lobby" | "night" | "park" | "studio" | "sunset" | "warehouse";
 
 export default function Home() {
   const [cameraPosition, setCameraPosition] = useState(new Vector3(0, 0, 0.20));
   const [ambientLightIntensity] = useState(0.0);
   const [directionalLightIntensity] = useState(10.0);
   const [directionalLightPosition] = useState(new Vector3(2, 2, 2));
-  const [environmentPreset, setEnvironmentPreset] = useState("sunset");
+  const [environmentPreset, setEnvironmentPreset] = useState<EnvironmentPreset>("sunset");
   const [backgroundColor, setBackgroundColor] = useState<string>("#1E1E1E");
   const [cameraType, setCameraType] = useState<'perspective' | 'orthographic'>('orthographic');
   const [environmentIntensity, setEnvironmentIntensity] = useState(1);
   const [environmentRotation, setEnvironmentRotation] = useState(0);
   const [mockupMaterial, setMockupMaterial] = useState<'glass' | 'platinum' | 'clay light' | 'clay dark'>('glass');
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [currentScreenTexture, setCurrentScreenTexture] = useState<Texture | null>(null);
   const [modelPosition, setModelPosition] = useState(new Vector3(0, 0, 0));
   const [modelRotation, setModelRotation] = useState(new Euler(0, 0, 0));
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [backgroundImageFit, setBackgroundImageFit] = useState<'fill' | 'fit'>('fill');
 
   // Perspective camera settings
@@ -43,12 +42,11 @@ export default function Home() {
   }, []);
 
   const handleImageUpload = useCallback((newImages: string[]) => {
-    setUploadedImages(prev => [...prev, ...newImages]);
+    console.log("New images uploaded:", newImages);
   }, []);
 
   const handleScreenDrop = useCallback((texture: Texture) => {
-    setCurrentScreenTexture(texture);
-    console.log("Screen texture updated:", texture); // Add this line for debugging
+    console.log("Screen texture updated:", texture);
   }, []);
 
   const handlePreview = useCallback(() => {
@@ -69,8 +67,7 @@ export default function Home() {
   }, []);
 
   const handleBackgroundImageChange = useCallback((imageUrl: string) => {
-    setBackgroundImage(imageUrl);
-    setBackgroundColor(`url(${imageUrl})`);
+    console.log("Background image changed:", imageUrl);
   }, []);
 
   const resetCamera = useCallback(() => {
@@ -126,7 +123,7 @@ export default function Home() {
         </div>
       </div>
       <ControlSidebar 
-        setEnvironmentPreset={setEnvironmentPreset}
+        setEnvironmentPreset={(preset: EnvironmentPreset) => setEnvironmentPreset(preset)}
         setBackgroundColor={handleBackgroundColorChange}
         setCameraType={setCameraType}
         setEnvironmentIntensity={setEnvironmentIntensity}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
+import Image from 'next/image';
 
 interface LeftSidebarProps {
   onImageUpload: (images: string[]) => void;
@@ -56,10 +57,12 @@ export default function LeftSidebar({ onImageUpload }: LeftSidebarProps) {
           <div className="mt-4 grid grid-cols-2 gap-2">
             {uploadedImages.map((image, index) => (
               <div key={index} className="relative aspect-square">
-                <img
+                <Image
                   src={image}
                   alt={`Uploaded ${index + 1}`}
-                  className="w-full h-full object-cover rounded"
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded"
                   draggable="true"
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", image)}
                 />

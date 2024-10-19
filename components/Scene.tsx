@@ -5,6 +5,7 @@ import { useRef, useEffect, useState, useMemo } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
+type EnvironmentPreset = "apartment" | "city" | "dawn" | "forest" | "lobby" | "night" | "park" | "studio" | "sunset" | "warehouse";
 
 interface SceneProps {
   cameraPosition: Vector3;
@@ -19,7 +20,7 @@ interface SceneProps {
   ambientLightIntensity: number;
   directionalLightIntensity: number;
   directionalLightPosition: Vector3;
-  environmentPreset: string;
+  environmentPreset: EnvironmentPreset;
   backgroundColor: string;
   cameraType: 'perspective' | 'orthographic';
   environmentIntensity: number;
@@ -169,7 +170,7 @@ export default function Scene({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [backgroundTexture, backgroundImageFit, scene, gl]);
+  }, [backgroundTexture, backgroundImageFit, scene, gl, updateTextureScale]);
 
   useEffect(() => {
     if (controlsRef.current && activeCamera) {
@@ -254,8 +255,8 @@ export default function Scene({
         far={1000}
       />
       <Environment 
-        preset={environmentPreset as any} 
-        background={false}  // Ensure this is false to not override the background
+        preset={environmentPreset} 
+        background={false}
       />
       <group rotation={[0, environmentRotation, 0]}>
         <ambientLight intensity={ambientLightIntensity * environmentIntensity} />
