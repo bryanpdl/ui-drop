@@ -1,101 +1,143 @@
-import Image from "next/image";
+"use client";
+
+import { Canvas } from "@react-three/fiber";
+import { Suspense, useState, useCallback, useEffect } from "react";
+import Scene from "@/components/Scene";
+import ControlSidebar from "@/components/ControlSidebar";
+import LeftSidebar from "@/components/LeftSidebar";
+import DockControls from "@/components/DockControls";
+import { Vector3, Color, Texture, Euler } from "three";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [cameraPosition, setCameraPosition] = useState(new Vector3(0, 0, 0.20));
+  const [ambientLightIntensity] = useState(0.0);
+  const [directionalLightIntensity] = useState(10.0);
+  const [directionalLightPosition] = useState(new Vector3(2, 2, 2));
+  const [environmentPreset, setEnvironmentPreset] = useState("sunset");
+  const [backgroundColor, setBackgroundColor] = useState<string>("#1E1E1E");
+  const [cameraType, setCameraType] = useState<'perspective' | 'orthographic'>('orthographic');
+  const [environmentIntensity, setEnvironmentIntensity] = useState(1);
+  const [environmentRotation, setEnvironmentRotation] = useState(0);
+  const [mockupMaterial, setMockupMaterial] = useState<'glass' | 'platinum' | 'clay light' | 'clay dark'>('glass');
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [currentScreenTexture, setCurrentScreenTexture] = useState<Texture | null>(null);
+  const [modelPosition, setModelPosition] = useState(new Vector3(0, 0, 0));
+  const [modelRotation, setModelRotation] = useState(new Euler(0, 0, 0));
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [backgroundImageFit, setBackgroundImageFit] = useState<'fill' | 'fit'>('fill');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Perspective camera settings
+  const perspectiveRotationLimit = Math.PI / 6; // 30 degrees
+  const perspectiveMinZoom = 0.15;
+  const perspectiveMaxZoom = 0.25;
+  const perspectivePanLimit = 0.05;
+
+  // Orthographic camera settings
+  const orthoRotationLimit = Math.PI / 6; // 30 degrees
+  const orthoMinZoom = 3000;
+  const orthoMaxZoom = 8000;
+  const orthoPanLimit = 0.1;
+
+  const handleBackgroundColorChange = useCallback((color: string) => {
+    setBackgroundColor(color);
+  }, []);
+
+  const handleImageUpload = useCallback((newImages: string[]) => {
+    setUploadedImages(prev => [...prev, ...newImages]);
+  }, []);
+
+  const handleScreenDrop = useCallback((texture: Texture) => {
+    setCurrentScreenTexture(texture);
+    console.log("Screen texture updated:", texture); // Add this line for debugging
+  }, []);
+
+  const handlePreview = useCallback(() => {
+    // Implement preview functionality here
+    console.log("Preview button clicked");
+  }, []);
+
+  const handleExport = useCallback(() => {
+    // Implement export functionality here
+    console.log("Export button clicked");
+  }, []);
+
+  const handleCopyToClipboard = useCallback(() => {
+    // Implement copy to clipboard functionality here
+    console.log("Copy to Clipboard button clicked");
+    // You might want to capture the current state of the scene or specific data
+    // and copy it to the clipboard using the Clipboard API
+  }, []);
+
+  const handleBackgroundImageChange = useCallback((imageUrl: string) => {
+    setBackgroundImage(imageUrl);
+    setBackgroundColor(`url(${imageUrl})`);
+  }, []);
+
+  const resetCamera = useCallback(() => {
+    if (cameraType === 'perspective') {
+      // Reset to default perspective camera position
+      setCameraPosition(new Vector3(0, 0, 0.25));
+    } else {
+      // Reset to default orthographic camera position
+      setCameraPosition(new Vector3(0, 0, 5));
+    }
+    // You might also want to reset other camera-related states here
+    // For example, resetting zoom, rotation, etc.
+  }, [cameraType]);
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <LeftSidebar onImageUpload={handleImageUpload} />
+      <div className="flex-grow relative overflow-hidden">
+        <div className="absolute inset-0 scene-container">
+          <Canvas>
+            <Suspense fallback={null}>
+              <Scene 
+                cameraPosition={cameraPosition}
+                perspectiveRotationLimit={perspectiveRotationLimit}
+                perspectiveMinZoom={perspectiveMinZoom}
+                perspectiveMaxZoom={perspectiveMaxZoom}
+                perspectivePanLimit={perspectivePanLimit}
+                orthoRotationLimit={orthoRotationLimit}
+                orthoMinZoom={orthoMinZoom}
+                orthoMaxZoom={orthoMaxZoom}
+                orthoPanLimit={orthoPanLimit}
+                ambientLightIntensity={ambientLightIntensity}
+                directionalLightIntensity={directionalLightIntensity}
+                directionalLightPosition={directionalLightPosition}
+                environmentPreset={environmentPreset}
+                backgroundColor={backgroundColor}
+                backgroundImageFit={backgroundImageFit}
+                cameraType={cameraType}
+                environmentIntensity={environmentIntensity}
+                environmentRotation={environmentRotation}
+                mockupMaterial={mockupMaterial}
+                modelPosition={modelPosition}
+                modelRotation={modelRotation}
+                onScreenDrop={handleScreenDrop}
+              />
+            </Suspense>
+          </Canvas>
+          <DockControls 
+            onPreview={handlePreview} 
+            onExport={handleExport} 
+            onCopyToClipboard={handleCopyToClipboard}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
+      <ControlSidebar 
+        setEnvironmentPreset={setEnvironmentPreset}
+        setBackgroundColor={handleBackgroundColorChange}
+        setCameraType={setCameraType}
+        setEnvironmentIntensity={setEnvironmentIntensity}
+        setEnvironmentRotation={setEnvironmentRotation}
+        setMockupMaterial={setMockupMaterial}
+        setModelPosition={setModelPosition}
+        setModelRotation={setModelRotation}
+        resetCamera={resetCamera}
+        setBackgroundImage={handleBackgroundImageChange}
+        setBackgroundImageFit={setBackgroundImageFit}
+      />
     </div>
   );
 }
