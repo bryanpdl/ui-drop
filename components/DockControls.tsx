@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Eye, Download, Copy } from 'lucide-react';
+import { Eye, EyeOff, Copy, Download } from 'lucide-react';
 
 interface DockControlsProps {
-  onPreview?: () => void;
-  onExport?: () => void;
-  onCopyToClipboard?: () => void;
+  onPreview: () => void;
+  onExport: () => void;
+  onCopyToClipboard: () => void;
+  isPreviewMode: boolean;
 }
 
-export default function DockControls({ onPreview, onExport, onCopyToClipboard }: DockControlsProps) {
+export default function DockControls({ onPreview, onExport, onCopyToClipboard, isPreviewMode }: DockControlsProps) {
   const [isExportHovered, setIsExportHovered] = useState(false);
 
   const handleDockClick = (e: React.MouseEvent) => {
@@ -22,9 +23,9 @@ export default function DockControls({ onPreview, onExport, onCopyToClipboard }:
       <button
         className="w-12 h-12 bg-button-default rounded-full flex items-center justify-center hover:bg-button-hover transition-colors duration-300"
         onClick={onPreview}
-        title="Preview"
+        title={isPreviewMode ? "Exit Preview" : "Preview"}
       >
-        <Eye size={24} color="white" />
+        {isPreviewMode ? <EyeOff size={24} color="white" /> : <Eye size={24} color="white" />}
       </button>
       <button
         className="w-12 h-12 bg-button-default rounded-full flex items-center justify-center hover:bg-button-hover transition-colors duration-300"

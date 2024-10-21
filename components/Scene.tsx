@@ -4,8 +4,8 @@ import { Vector3, Camera, Color, Euler } from "three";
 import { useRef, useEffect, useState, useMemo } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { EnvironmentPreset } from '@/app/editor/presets';
 
-type EnvironmentPreset = "apartment" | "city" | "dawn" | "forest" | "lobby" | "night" | "park" | "studio" | "sunset" | "warehouse";
 
 interface SceneProps {
   cameraPosition: Vector3;
@@ -28,6 +28,7 @@ interface SceneProps {
   mockupMaterial: 'glass' | 'platinum' | 'clay light' | 'clay dark';
   modelPosition: Vector3;
   modelRotation: Euler;
+  screenImage: string | null;
   onScreenDrop: (texture: THREE.Texture) => void;
   backgroundImageFit: 'fill' | 'fit';
 }
@@ -53,6 +54,7 @@ export default function Scene({
   mockupMaterial,
   modelPosition,
   modelRotation,
+  screenImage,
   onScreenDrop,
   backgroundImageFit,
 }: SceneProps) {
@@ -62,6 +64,7 @@ export default function Scene({
   const perspectiveCameraRef = useRef<THREE.PerspectiveCamera>(null);
   const orthographicCameraRef = useRef<THREE.OrthographicCamera>(null);
   const [activeCamera, setActiveCamera] = useState<Camera | null>(null);
+  const [screenTexture, setScreenTexture] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
     if (cameraType === 'perspective' && perspectiveCameraRef.current) {
@@ -73,7 +76,26 @@ export default function Scene({
 
   const backgroundTexture = useMemo(() => {
     if (typeof backgroundColor === 'string') {
-      if (backgroundColor.startsWith('url(')) {
+      if (backgroundColor.startsWith('linear-gradient')) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const context = canvas.getContext('2d')!;
+        
+        const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        const colors = backgroundColor.match(/#[a-fA-F0-9]{6}/g) || [];
+        
+        colors.forEach((color, index) => {
+          gradient.addColorStop(index / (colors.length - 1), color);
+        });
+        
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        return texture;
+      } else if (backgroundColor.startsWith('url(')) {
         const imageUrl = backgroundColor.slice(4, -1).replace(/['"]/g, '');
         const texture = new THREE.TextureLoader().load(imageUrl, () => {
           // Texture loaded callback
@@ -82,7 +104,7 @@ export default function Scene({
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         return texture;
-      } else if (backgroundColor.startsWith('linear-gradient') || backgroundColor.startsWith('radial-gradient')) {
+      } else if (backgroundColor.startsWith('radial-gradient')) {
         // Handle gradients (keep existing gradient logic)
         const canvas = document.createElement('canvas');
         canvas.width = 1024;
@@ -170,7 +192,7 @@ export default function Scene({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [backgroundTexture, backgroundImageFit, scene, gl, updateTextureScale]);
+  }, [backgroundTexture, backgroundImageFit, scene, gl]);
 
   useEffect(() => {
     if (controlsRef.current && activeCamera) {
@@ -229,6 +251,15 @@ export default function Scene({
     gl.setClearColor(0x000000, 0);
   }, [gl]);
 
+  useEffect(() => {
+    if (screenImage) {
+      const loader = new THREE.TextureLoader();
+      loader.load(screenImage, (texture) => {
+        setScreenTexture(texture);
+      });
+    }
+  }, [screenImage]);
+
   return (
     <>
       {activeCamera && (
@@ -255,8 +286,8 @@ export default function Scene({
         far={1000}
       />
       <Environment 
-        preset={environmentPreset} 
-        background={false}
+        preset={environmentPreset as any} 
+        background={false}  // Ensure this is false to not override the background
       />
       <group rotation={[0, environmentRotation, 0]}>
         <ambientLight intensity={ambientLightIntensity * environmentIntensity} />

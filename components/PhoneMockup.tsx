@@ -1,6 +1,6 @@
 import { useGLTF } from "@react-three/drei";
 import { useState, useEffect, useRef } from "react";
-import { Mesh, TextureLoader, MeshPhysicalMaterial, MeshStandardMaterial, Color, Texture, DoubleSide, Group } from "three";
+import { Mesh, TextureLoader, MeshPhysicalMaterial, MeshStandardMaterial, Color, Vector3, Texture, DoubleSide, Group } from "three";
 import * as THREE from "three";
 
 interface PhoneMockupProps {
