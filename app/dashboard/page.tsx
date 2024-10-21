@@ -98,7 +98,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#121213] text-white">
       <nav className="bg-[#1F1F1F] py-4 px-6 flex justify-between items-center">
         <div className="flex items-center">
-          <Link href="/" className="text-2xl font-bold mr-6">uidrop</Link>
+          <Link href="/" className="text-2xl font-bold mr-6">uidrop.</Link>
         </div>
         {user ? (
           <button
